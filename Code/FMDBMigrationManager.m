@@ -43,19 +43,20 @@ BOOL FMDBIsMigrationAtPath(NSString *path)
 static NSArray *FMDBClassesConformingToProtocol(Protocol *protocol)
 {
     NSMutableArray *conformingClasses = [NSMutableArray new];
+    int numClasses = 0, newNumClasses = objc_getClassList(NULL, 0);
     Class *classes = NULL;
-    int numClasses = objc_getClassList(NULL, 0);
-    if (numClasses > 0 ) {
-        classes = (Class *)malloc(sizeof(Class) * numClasses);
-        numClasses = objc_getClassList(classes, numClasses);
-        for (int index = 0; index < numClasses; index++) {
-            Class nextClass = classes[index];
-            if (class_conformsToProtocol(nextClass, protocol)) {
-                [conformingClasses addObject:nextClass];
-            }
-        }
-        free(classes);
+    while (numClasses < newNumClasses) {
+        numClasses = newNumClasses;
+        classes = (Class *)realloc(classes, sizeof(Class) * numClasses);
+        newNumClasses = objc_getClassList(classes, numClasses);
     }
+    for (int index = 0; index < numClasses; index++) {
+        Class nextClass = classes[index];
+        if (class_conformsToProtocol(nextClass, protocol)) {
+            [conformingClasses addObject:nextClass];
+        }
+    }
+    free(classes);
     return conformingClasses;
 }
 
